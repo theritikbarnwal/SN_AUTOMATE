@@ -17,11 +17,10 @@ const fs = require('fs');
     const baseUrl = "https://careers.servicenow.com/jobs/";
     const experienceRegex = /\b(?:at least\s*\d+\+?\s*years?|minimum\s*\d+\+?\s*years?|\d+\+?\s*years?|one year|two years?|three years?|four years?|five years?|six years?|seven years?|eight years?|nine years?|ten years?)\b/gi;
 
-    for (let pageNum = 1; pageNum <= 1; pageNum++) {
+    for (let pageNum = 1; pageNum <= 2; pageNum++) {
         const url = `${baseUrl}?page=${pageNum}#results`;
         try {
             await page.goto(url, { waitUntil: 'domcontentloaded' });
-            await page.waitForTimeout(3000);
 
             await page.waitForFunction(() => {
                 const cards = document.querySelectorAll('div.card.card-job');
@@ -56,11 +55,7 @@ const fs = require('fs');
                     try {
                         const jobPage = await browser.newPage();
                         await jobPage.goto(jobLink, { waitUntil: 'domcontentloaded' });
-                        await jobPage.waitForTimeout(3000);
-                        await jobPage.evaluate(() => window.scrollBy(0, window.innerHeight)); // scroll down
-                        await jobPage.waitForSelector('article.cms-content', { timeout: 5000 });
-                        
-                        await jobPage.waitForTimeout(2000); // wait again after scroll
+
                         const pageText = await jobPage.innerText('body');
                         const matches = pageText.match(experienceRegex);
                         if (matches) {
