@@ -1,4 +1,4 @@
-name: Job Scraping Automation
+name: ServiceNow Job Scraping Automation
 
 on:
   schedule:
