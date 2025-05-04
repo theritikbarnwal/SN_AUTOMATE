@@ -1,0 +1,42 @@
+name: Job Scraping Automation
+
+on:
+  schedule:
+    - cron: '20 3 * * *'  # # Run every 5 minutes update this to your desired schedule
+  workflow_dispatch:  # Allows manual triggering of the workflow
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+
+      - name: Install dependencies
+        run: |
+          npm install
+          npx playwright install --with-deps
+
+      - name: Run the job scraping script
+        run: node index.js
+
+      - name: Check if jobs file exists and commit
+        run: |
+          FILE_NAME=$(ls -t jobs-*.json | head -n 1)
+          if [ -f "$FILE_NAME" ]; then
+            git config --global user.name 'theritikbarnwal'
+            git config --global user.email 'theritikbarnwal@gmail.com'
+            git add "$FILE_NAME"
+            git commit -m "Update job data: $FILE_NAME"
+            git push
+          else
+            echo "No jobs found, skipping commit"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
