@@ -130,5 +130,3 @@ The `.github/workflows/scrape.yml` file automates the scraping process using **G
 Feel free to contribute, suggest improvements, or open an issue if you encounter any problems.
 
 ---
-
-This version enhances readability, provides more context, and clearly explains each part of the repository and how to handle known issues. Let me know if you need further improvements!
