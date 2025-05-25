@@ -87,7 +87,7 @@ const fs = require('fs');
 
     // Add timestamped file save
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const filename = `jobs-${timestamp}.json`;
+    const filename = `JS_jobs-${timestamp}.json`;
     fs.writeFileSync(filename, JSON.stringify(jobs, null, 2));
     console.log(`Saved ${jobs.length} jobs to ${filename}`);
 })();
