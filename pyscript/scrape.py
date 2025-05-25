@@ -65,7 +65,7 @@ def scrape_jobs():
         browser.close()
 
         timestamp = datetime.now().isoformat().replace(":", "-").replace(".", "-")
-        filename = f"jobs-{timestamp}.json"
+        filename = f"PY_jobs-{timestamp}.json"
         with open(filename, "w") as f:
             json.dump(jobs, f, indent=2)
 
