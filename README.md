@@ -2,131 +2,179 @@
 
 ## Overview
 
-`SN_AUTOMATE` is an automated web scraping tool built with **Playwright** to extract **job posting** data from **ServiceNow's** careers page. This repository also contains an automated CI/CD pipeline that allows scheduled or manual scraping using **GitHub Actions**. The scraped data is stored in a structured **JSON** format, providing useful insights like job titles, descriptions, and experience requirements.
+`SN_AUTOMATE` is an automated web scraping solution built to extract job posting data from ServiceNow's careers page. It supports two independent scraping mechanisms:
 
-This tool is designed to automate the scraping process, eliminate manual effort, and integrate into your workflow efficiently.
+* A **JavaScript-based scraper** using **Playwright** (`index.js`)
+* A **Python-based scraper** using **Playwright (sync API)** (`pyscript/scrape.py`)
 
-## File Structure
+Both scripts are integrated with **GitHub Actions** CI/CD pipelines and save results in structured JSON files.
 
-The repository contains the following files and directories:
+---
+
+## Repository Structure
 
 ```
 SN_AUTOMATE/
 │
 ├── .github/
 │   └── workflows/
-│       └── scrape.yml        # GitHub Actions configuration for automated scraping
+│       ├── main.yml         # GitHub Actions for Python scraper
+│       └── scrape.yml       # GitHub Actions for JavaScript scraper
 │
-├── index.html               # Basic HTML structure for displaying or verifying scraped data
-├── package.json             # Node.js package manager file with all necessary dependencies
-└── data.json                # JSON file containing the latest scraped job data
+├── index.js                # JavaScript-based Playwright scraper
+├── package.json            # Node.js dependencies and scripts
+├── README.md               # Project documentation
+│
+├── pyscript/
+│   ├── scrape.py           # Python-based Playwright scraper
+│   └── requirements.txt    # Python dependencies
+│
+├── JS_jobs.json            # JavaScript scraped data json file
+├── PY_jobs.json            # Python scraped data jsoon file
 ```
 
-### File Descriptions:
-
-* **index.html**: A simple static HTML file that can be used to display or validate the scraped job data.
-* **scrape.yml**: A GitHub Actions workflow configuration file that automates the scraping process, defining when and how the scraping should be triggered.
-* **package.json**: Contains the project's dependencies (e.g., Playwright) and scripts for running the scraper.
-* **data.json**: The output file that stores all the extracted job postings from the ServiceNow careers website in JSON format.
+---
 
 ## Features
 
-* **Web Scraping with Playwright**: Uses Playwright to programmatically navigate through the ServiceNow careers page and scrape job postings data.
-* **Headless Browser Mode**: Can run in both headless (no GUI) and non-headless mode for flexibility.
-* **Automated CI/CD with GitHub Actions**: Automates scraping using GitHub Actions for scheduled or push-triggered runs.
-* **Data Storage in JSON Format**: Scraped data is stored in a well-structured JSON format for easy access and further analysis.
+* **Dual Scraping Options**: JS and Python versions for flexibility.
+* **Headless Browser Support**: Can run both headless and non-headless.
+* **Automated GitHub Workflows**: CI/CD pipelines push scraped results automatically.
+* **Structured JSON Output**: Easily consumable and analyzable data.
 
-## Installation & Setup
+---
 
-### 1. Clone the Repository
+## JavaScript-Based Scraper (`index.js`)
 
-Clone the repository to your local machine:
+### Pros:
 
-```bash
-git clone https://github.com/theritikbarnwal/SN_AUTOMATE.git
-cd SN_AUTOMATE
-```
+* Lightweight and natively integrates with Node.js-based automation.
+* Easy integration with existing front-end projects.
 
-### 2. Install Dependencies
+### Known Challenge:
 
-Install the necessary Node.js dependencies by running the following command:
+**Headless Mode Bug**
 
-```bash
-npm install
-```
+* Fails to consistently scrape the **experience** section.
+* Works when run with `headless: false`.
 
-### 3. Configure GitHub Actions
+### Cause:
 
-GitHub Actions are configured through the `scrape.yml` file. This file will automate the scraping process. You can set it to run on a schedule (e.g., daily) or on a push to the `main` branch.
+* Dynamic JavaScript rendering delays.
+* Experience fields are possibly loaded asynchronously.
 
-### 4. Run the Scraper Locally
+### Solutions:
 
-To test or run the scraper locally, execute the following command:
-
-```bash
-node index.js
-```
-
-Make sure the dependencies are installed correctly before running this command.
-
-## Known Issues
-
-### 1. Issue with Headless Mode
-
-When running the scraper in **headless mode (`headless: true`)**, it fails to scrape the **experience** section of the job postings correctly. However, it works perfectly when the browser is run with **headless: false** (non-headless mode).
-
-#### Problem Description:
-
-In headless mode, Playwright sometimes fails to interact with dynamic content on the page or waits too long for elements to load, especially those rendered with JavaScript after the initial HTML is loaded. As a result, the experience field is not properly scraped.
-
-#### Root Cause:
-
-* **Dynamic Content Loading**: The experience section is dynamically loaded, possibly with JavaScript after the initial page load. In non-headless mode, the browser window is displayed, which may allow the content to load correctly before the scraper tries to access it.
-
-* **Timing Issues**: Headless browsers are optimized for speed, and elements might not be fully rendered by the time the script tries to scrape them. Playwright, in headless mode, might miss out on waiting for specific elements to appear on the page.
-
-#### Proposed Solutions:
-
-1. **Explicit Waits**: Use Playwright's `waitForSelector()` to ensure that the experience section is loaded before attempting to scrape it.
+1. **Explicit Waits**
 
    ```js
    await page.waitForSelector('.experience-class', { timeout: 5000 });
    ```
 
-2. **Increase Timeout**: Sometimes the page takes longer to load in headless mode. Increasing the timeout value might resolve the issue.
+2. **Increased Timeout**
 
-3. **Viewport Adjustments**: In some cases, increasing the browser's viewport size in headless mode can resolve rendering issues by ensuring all elements are visible.
+3. **Larger Viewport in Headless Mode**
 
    ```js
-   await browser.newContext({
-     viewport: { width: 1280, height: 1024 }
-   });
+   await browser.newContext({ viewport: { width: 1280, height: 1024 } });
    ```
 
-4. **Enable Debug Mode**: For debugging, you can enable Playwright's debug logs in headless mode to get insights into why the content is not loading.
+4. **Enable Debug Logs**
 
    ```bash
    DEBUG=pw:browser* node index.js
    ```
 
-By implementing these fixes, the script should work consistently in both headless and non-headless modes.
+### Output:
 
-## CI/CD Integration with GitHub Actions
+Creates JSON file with structure:
 
-The `.github/workflows/scrape.yml` file automates the scraping process using **GitHub Actions**. Below is a brief overview of the workflow:
+```json
+{
+  "Job": "Job Title",
+  "Location": "City, Country",
+  "Experience": "not_mentioned",
+  "Job Description": "Job URL",
+  "ServiceNow Page": 1
+}
+```
+❌ Experience is marked as "not_mentioned" due to:
 
-### Workflow Steps:
+    JavaScript scraper running in headless mode: "true"
 
-1. **Trigger**: The workflow is triggered on either a push to the `main` branch or a scheduled time (e.g., daily at midnight).
-2. **Checkout Repository**: The workflow first checks out the code from the repository.
-3. **Install Dependencies**: It installs the necessary Node.js dependencies (like Playwright).
-4. **Run Scraping Script**: Executes the scraping script to extract job data.
-5. **Commit Scraped Data**: After scraping, the data is committed back to the repository (or can be uploaded to an external database if desired).
-
-## Conclusion
-
-`SN_AUTOMATE` offers an efficient solution for scraping job postings from ServiceNow, automating the process with **Playwright** and **GitHub Actions**. While there are known issues with scraping in headless mode, these can be addressed with appropriate configuration adjustments. This project is a great example of leveraging modern web scraping and CI/CD techniques for automated data extraction.
-
-Feel free to contribute, suggest improvements, or open an issue if you encounter any problems.
+    Dynamic content not rendering before scraping
 
 ---
+
+## Python-Based Scraper (`pyscript/scrape.py`)
+
+### Script Summary:
+
+Uses Playwright's **sync API** to scrape job title, location, description link, and experience (using regex).
+
+### Key Features:
+
+* Scrapes **multiple pages**.
+* Opens job detail pages and extracts text for **experience pattern matching**.
+* Stores result in timestamped JSON under `PY_jobs/`.
+
+### Experience Extraction:
+
+Uses regex to match phrases like:
+
+* "2+ years", "minimum 5 years", "at least 3 years"
+
+### Output:
+
+Creates JSON file with structure:
+
+```json
+{
+  "Job": "Job Title",
+  "Location": "City, Country",
+  "Experience": "2+ years, minimum 5 years",
+  "Job Description": "Job URL",
+  "ServiceNow Page": 1
+}
+```
+
+---
+
+## GitHub Actions Workflows
+
+### 1. `scrape.yml` (JavaScript Scraper)
+
+* Trigger: Push to `main` or on schedule.
+* Installs Node.js dependencies.
+* Runs `index.js`.
+* Commits `JS_jobs-*.json` back to repo.
+
+### 2. `main.yml` (Python Scraper)
+
+* Trigger: Weekly (Mon, 4:30 AM UTC) or manual dispatch.
+* Installs Python & Playwright.
+* Runs `pyscript/scrape.py`.
+* Commits `PY_jobs-*.json` back to repo.
+
+---
+
+## When to Use Which Scraper
+
+| Situation                        | Use JS Script   | Use Python Script  |
+| -------------------------------- | --------------- | ------------------ |
+| CI/CD Integration                | ✓               | ✓                  |
+| More Reliable Experience Parsing | ❌ (in headless) | ✓ (regex matching) |
+| Faster Setup for Web Dev         | ✓               | ❌                  |
+| Multi-page Scraping              | ❌               | ✓                  |
+
+> ✅ **Python script offers better reliability when extracting dynamically loaded content like experience fields.**
+
+---
+
+## Final Notes
+
+* The Python scraper is more robust for detailed extraction and can handle edge cases better.
+* The JavaScript scraper is lightweight and simpler to set up in front-end CI environments.
+* You can run both scrapers in **parallel** in **different branches** to avoid Git push conflicts.
+
+Contributions and issue reports are welcome!
