@@ -2,9 +2,8 @@ name: ServiceNow Job Scraping Automation
 
 on:
   schedule:
-    - cron: '30 4 * * 1'  # Monday at 03:20
-    - cron: '30 4 * * 5'  # Friday at 03:20
-  workflow_dispatch:  # Allows manual triggering of the workflow
+    - cron: '*/5 * * * *'  # Every 5 minutes
+  workflow_dispatch:
 
 jobs:
   scrape:
@@ -35,6 +34,7 @@ jobs:
             git config --global user.email 'theritikbarnwal@gmail.com'
             git add "$FILE_NAME"
             git commit -m "Update job data: $FILE_NAME"
+            git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}
             git push
           else
             echo "No jobs found, skipping commit"
